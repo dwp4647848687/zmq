@@ -32,6 +32,7 @@
 *.exe
 *.out
 *.app
+**/bin/**
 
 # macOS
 .DS_Store

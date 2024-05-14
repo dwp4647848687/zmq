@@ -1,8 +1,11 @@
 #include "broker.hpp"
 
-#include <string>
-#include <vector>
+#include <algorithm>
+#include <chrono>
 #include <iostream>
+#include <string>
+#include <thread>
+#include <vector>
 
 #include "zmq.hpp"
 #include "zmq_addon.hpp"
@@ -18,7 +21,7 @@ Broker::Broker(const std::string& clusterName, const std::vector<std::string>& o
         m_localbe(ctx, ZMQ_ROUTER),
         m_cloudfe(ctx, ZMQ_ROUTER),
         m_cloudbe(ctx, ZMQ_ROUTER),
-        m_statefe(ctx, ZMQ_SUB),
+        m_statefe(ctx, ZMQ_SUB), 
         m_statebe(ctx, ZMQ_PUB),
         m_monitor(ctx, ZMQ_PULL),
         m_clusterName(clusterName),
@@ -29,6 +32,7 @@ Broker::Broker(const std::string& clusterName, const std::vector<std::string>& o
     m_localbe.bind("ipc://" + m_clusterName + "-localbe.ipc") ;
 
     // Cloud routing
+    m_cloudfe.set(zmq::sockopt::routing_id, m_clusterName) ;
     m_cloudfe.bind("ipc://" + m_clusterName + "-cloud.ipc") ;
     m_cloudbe.set(zmq::sockopt::routing_id, m_clusterName) ;
     for (const std::string& cluster : m_otherClusters)
@@ -47,21 +51,23 @@ Broker::Broker(const std::string& clusterName, const std::vector<std::string>& o
 
     // Monitor
     m_monitor.bind("ipc://" + m_clusterName + "-monitor.ipc") ;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000)) ;
 }
     
 void Broker::run()
 {
     zmq::pollitem_t primaryItems[] = { { m_localbe, 0, ZMQ_POLLIN, 0 },
-                                           { m_cloudbe, 0, ZMQ_POLLIN, 0 },
-                                           { m_statefe, 0, ZMQ_POLLIN, 0 },
-                                           { m_monitor, 0, ZMQ_POLLIN, 0 } } ;
+                                       { m_cloudbe, 0, ZMQ_POLLIN, 0 },
+                                       { m_statefe, 0, ZMQ_POLLIN, 0 },
+                                       { m_monitor, 0, ZMQ_POLLIN, 0 } } ;
 
     zmq::pollitem_t clientItems[] = { { m_localfe, 0, ZMQ_POLLIN, 0 },
-                                        { m_cloudfe, 0, ZMQ_POLLIN, 0 } } ;
+                                      { m_cloudfe, 0, ZMQ_POLLIN, 0 } } ;
 
     while (true)
     {
-        std::chrono::duration waitTime = std::chrono::milliseconds(m_localCapacity > 0 ? 1000 : -1) ;
+        std::chrono::duration waitTime = std::chrono::seconds(1) ;
         int rc = zmq::poll(primaryItems, 4, waitTime) ;
         if (rc == -1)
         {
@@ -71,11 +77,11 @@ void Broker::run()
         pollWorkers(primaryItems) ;
         pollState(primaryItems) ;
         pollLog(primaryItems) ;
-
         pollClients(clientItems) ;
 
         if (previousLocalCapacity != m_localCapacity)
         {
+            std::cout << "Local capacity changed to " << m_localCapacity << std::endl ;
             zmq::multipart_t message ;
             message.addstr(m_clusterName) ;
             message.addstr(std::to_string(m_localCapacity)) ;
@@ -142,6 +148,7 @@ void Broker::pollState(zmq::pollitem_t* items)
         }
         std::string clusterID = message.popstr() ;
         size_t capacity = std::stoul(message.popstr()) ;
+        std::cout << "Cluster " << clusterID << " has " << capacity << " workers available" << std::endl ;
         m_cloudCapacities[clusterID] = capacity ;
     }
 }
@@ -159,8 +166,8 @@ void Broker::pollClients(zmq::pollitem_t* items)
     size_t totalCapacity = getTotalCapacity() ;
     while (totalCapacity > 0)
     {
-        int rc = m_localCapacity > 0 ? zmq::poll(items, 2, std::chrono::milliseconds(0))
-                                        : zmq::poll(items, 1, std::chrono::milliseconds(0)) ;
+        int rc = m_localCapacity > 0 ? zmq::poll(items, 2, std::chrono::milliseconds(100))
+                                     : zmq::poll(items, 1, std::chrono::milliseconds(100)) ;
         if (rc == -1)
         {
             return ;  // Interrupted
@@ -173,8 +180,8 @@ void Broker::pollClients(zmq::pollitem_t* items)
         else if (items[1].revents & ZMQ_POLLIN)
         {
             message.recv(m_cloudfe) ;
-            std::cout << "Received task " << message.peekstr(2)
-                        << " from cloud cluster " << message.peekstr(0) << std::endl ;
+            std::cout << "Received task " << message.peekstr(4)
+                      << " from cloud cluster " << message.peekstr(0) << std::endl ;
         }
         else
         {
@@ -204,6 +211,7 @@ void Broker::pollClients(zmq::pollitem_t* items)
             std::cout << "No local workers, forwarding task " << message.peekstr(3)
                         << " to cloud cluster " << bestCluster << std::endl ;
             message.pushstr(bestCluster) ;
+            message.send(m_cloudbe) ;
         }
         totalCapacity = getTotalCapacity() ;
     }
