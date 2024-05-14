@@ -23,12 +23,13 @@ OBJECTS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SOURCES:.$(SRC_EXT)=.$(OBJ_E
 CFLAGS := -Wall -g -std=c++17
 INC := -I $(INC_DIR) -I /Users/danparrott/git/zmq/cppzmq
 LIB := -lzmq
+RPATH := -rpath /usr/local/lib
 
 $(TARGET): $(OBJECTS) 
 	@mkdir -p $(TARGET_DIR)
 	@echo "Linking..."
 	@echo "  Linking $(TARGET)"
-	@($(CC) $^ -o $(TARGET) $(CFLAGS) $(LIB) $(INC))
+	@($(CC) $^ -o $(TARGET) $(CFLAGS) $(LIB) $(INC) $(RPATH))
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.$(SRC_EXT) $(DEP_DIR)/%.d | $(DEP_DIR)
 	@mkdir -p $(BUILD_DIR)

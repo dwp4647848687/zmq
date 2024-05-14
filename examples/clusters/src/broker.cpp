@@ -30,14 +30,14 @@ Broker::Broker(const std::string& clusterName, const std::vector<std::string>& o
 
     // Cloud routing
     m_cloudfe.bind("ipc://" + m_clusterName + "-cloud.ipc") ;
-    m_cloudbe.setsockopt(ZMQ_IDENTITY, m_clusterName.c_str(), m_clusterName.size()) ;
+    m_cloudbe.set(zmq::sockopt::routing_id, m_clusterName) ;
     for (const std::string& cluster : m_otherClusters)
     {
         std::cout << "Info: connecting to cloud frontend at '" << cluster << "'\n" ;
         m_cloudbe.connect("ipc://" + cluster + "-cloud.ipc") ;
     }
     // State
-    m_statefe.setsockopt(ZMQ_SUBSCRIBE, "", 0) ;
+    m_statefe.set(zmq::sockopt::subscribe, "") ;
     for (const std::string& cluster : m_otherClusters)
     {
         std::cout << "Info: connecting to state backend at '" << cluster << "'\n" ;

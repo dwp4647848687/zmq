@@ -202,9 +202,7 @@ s_dump (zmq::socket_t & socket)
         }
         std::cout << std::endl;
 
-        int more = 0;           //  Multipart detection
-        size_t more_size = sizeof (more);
-        socket.getsockopt (ZMQ_RCVMORE, &more, &more_size);
+        bool more = socket.get(zmq::sockopt::rcvmore);
         if (!more)
             break;              //  Last message part
     }
