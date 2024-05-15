@@ -37,7 +37,7 @@ private:
     std::shared_ptr<zmq::context_t> m_ctx ;
     std::unique_ptr<zmq::socket_t> m_worker = nullptr ;
     size_t m_liveness = HEARTBEAT_LIVENESS ;
-    std::chrono::time_point<std::chrono::system_clock> m_nextHeartbeat ;
+    TimePoint m_nextHeartbeat ;
     Duration m_heartbeat = std::chrono::milliseconds(2500) ;
     Duration m_reconnect = std::chrono::milliseconds(2500) ;
 

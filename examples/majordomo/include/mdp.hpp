@@ -1,6 +1,7 @@
 #ifndef MD1_ZMQMANAGER_EXAMPLES_MAJORDOMO_MDP_HPP
 #define MD1_ZMQMANAGER_EXAMPLES_MAJORDOMO_MDP_HPP
 
+#include <chrono>
 #include <iostream>
 #include <string_view>
 
@@ -14,6 +15,7 @@ static constexpr std::string_view MDP_CLIENT = "MDPC01" ;
 static constexpr std::string_view MDP_WORKER = "MDPW01" ;
 
 using Duration = std::chrono::duration<int64_t, std::milli> ;
+using TimePoint = std::chrono::time_point<std::chrono::system_clock> ;
 
 enum class WMessageType : uint8_t
 {
