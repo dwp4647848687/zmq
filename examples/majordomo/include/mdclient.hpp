@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <chrono>
 
+#include "mdp.hpp"
 #include "zmq.hpp"
 #include "zmq_addon.hpp"
 

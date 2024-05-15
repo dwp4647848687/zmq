@@ -71,7 +71,7 @@ zmq::multipart_t Client::send(const std::string& service, zmq::multipart_t&& req
         while (s_interrupted == false)
         {
             zmq::pollitem_t items[] = { { *m_client, 0, ZMQ_POLLIN, 0 } } ;
-            zmq::poll(&items[0], 1, m_timeout) ;
+            zmq::poll(items, 1, m_timeout) ;
             if (items[0].revents & ZMQ_POLLIN)
             {
                 zmq::multipart_t msg ;
