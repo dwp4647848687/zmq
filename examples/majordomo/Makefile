@@ -9,15 +9,23 @@ DEP_DIR := $(BUILD_DIR)/deps
 DEP_FLAGS = -MT $@ -MMD -MP -MF $(DEP_DIR)/$*.$(DEP_EXT)
 
 TARGET_DIR := bin
-EXE := $(notdir $(patsubst %/,%,$(CURDIR)))
-TARGET := $(TARGET_DIR)/$(EXE)
+TARGET_CLIENT := $(TARGET_DIR)/client
+TARGET_WORKER := $(TARGET_DIR)/worker
+TARGET_BROKER := $(TARGET_DIR)/broker
 
 # Sources and Objects
 SRC_EXT := cpp
 DEP_EXT := d
 OBJ_EXT := o
 SOURCES := $(shell find $(SRC_DIR) -type f -name *.$(SRC_EXT))
-OBJECTS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SOURCES:.$(SRC_EXT)=.$(OBJ_EXT)))
+SOURCES_CLIENT := $(filter-out $(SRC_DIR)/mdworkermain.cpp $(SRC_DIR)/mdbrokermain.cpp, $(SOURCES))
+SOURCES_WORKER := $(filter-out $(SRC_DIR)/mdclientmain.cpp $(SRC_DIR)/mdbrokermain.cpp, $(SOURCES))
+SOURCES_BROKER := $(filter-out $(SRC_DIR)/mdclientmain.cpp $(SRC_DIR)/mdworkermain.cpp, $(SOURCES))
+
+OBJECTS_CLIENT := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SOURCES_CLIENT:.$(SRC_EXT)=.$(OBJ_EXT)))
+OBJECTS_WORKER := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SOURCES_WORKER:.$(SRC_EXT)=.$(OBJ_EXT)))
+OBJECTS_BROKER := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SOURCES_BROKER:.$(SRC_EXT)=.$(OBJ_EXT)))
+
 
 # Compiler Flags
 CFLAGS := -Wall -g -std=c++17
@@ -25,11 +33,23 @@ INC := -I $(INC_DIR) -I /Users/danparrott/git/zmq/cppzmq
 LIB := -lzmq
 RPATH := -rpath /usr/local/lib
 
-$(TARGET): $(OBJECTS) 
+$(TARGET_CLIENT): $(OBJECTS_CLIENT) 
 	@mkdir -p $(TARGET_DIR)
 	@echo "Linking..."
-	@echo "  Linking $(TARGET)"
-	@($(CC) $^ -o $(TARGET) $(CFLAGS) $(LIB) $(INC) $(RPATH))
+	@echo "  Linking $(TARGET_CLIENT)"
+	@($(CC) $^ -o $(TARGET_CLIENT) $(CFLAGS) $(LIB) $(INC) $(RPATH))
+
+$(TARGET_WORKER): $(OBJECTS_WORKER) 
+	@mkdir -p $(TARGET_DIR)
+	@echo "Linking..."
+	@echo "  Linking $(TARGET_WORKER)"
+	@($(CC) $^ -o $(TARGET_WORKER) $(CFLAGS) $(LIB) $(INC) $(RPATH))
+
+$(TARGET_BROKER): $(OBJECTS_BROKER)
+	@mkdir -p $(TARGET_DIR)
+	@echo "Linking..."
+	@echo "  Linking $(TARGET_BROKER)"
+	@($(CC) $^ -o $(TARGET_BROKER) $(CFLAGS) $(LIB) $(INC) $(RPATH))
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.$(SRC_EXT) $(DEP_DIR)/%.d | $(DEP_DIR)
 	@mkdir -p $(BUILD_DIR)
@@ -41,7 +61,12 @@ $(DEP_DIR): ; @mkdir -p $@
 DEP_FILES := $(SOURCES:$(SRC_DIR)/%.$(SRC_EXT)=$(DEP_DIR)/%.d)
 $(DEP_FILES):
 include $(wildcard $(DEP_FILES))
-all: $(TARGET)
+
+client: $(TARGET_CLIENT)
+
+worker: $(TARGET_WORKER)
+
+broker: $(TARGET_BROKER)
 
 clean:
 	@if [ -z "$(BUILD_DIR)" ]; then \
@@ -49,13 +74,9 @@ clean:
 		exit 1; \
 	fi
 
-	@echo "Cleaning $(TARGET)..."
+	@echo "Cleaning..."
 	$(RM) $(BUILD_DIR)/*.o
 	$(RM) $(BUILD_DIR)/deps/*.$(DEP_EXT)
-	$(RM) $(TARGET)
-
-run: $(TARGET)
-	@echo " "
-	@echo "Running $(EXE) application"
-	@echo " "
-	@($<)
+	$(RM) $(TARGET_CLIENT)
+	$(RM) $(TARGET_WORKER)
+	$(RM) $(TARGET_BROKER)
