@@ -255,6 +255,11 @@ void Broker::processWorkerMessage(const std::string& workerIdentity, zmq::multip
             message.push(zmq::message_t()) ;
             message.pushstr(client) ;
             message.send(*m_socket) ;
+            if (m_verbose == true)
+            {
+                s_console("I: sending REPLY to client %s", client.c_str()) ;
+                dump(message) ;
+            }
             markWorkerAsWaiting(worker) ;
             break ;
         }

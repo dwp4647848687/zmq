@@ -44,7 +44,7 @@ inline void dump(const zmq::multipart_t& msg)
     std::cout << "---------------------------------------------" << "\n" ;
     for (auto itr = msg.cbegin(); itr != msg.cend(); ++itr)
     {
-        std::cout << "[" << itr->size() << "] " << itr->str() << "\n" ;
+        std::cout<< itr->str() << "\n" ;
     }
     std::cout << std::endl ;
 }

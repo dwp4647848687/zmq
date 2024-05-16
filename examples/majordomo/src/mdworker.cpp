@@ -35,7 +35,7 @@ Worker::Worker(const std::string& brokerAddr, const std::string& service, bool v
 void Worker::connectToBroker()
 {
     m_worker.reset() ;
-    m_worker = std::make_unique<zmq::socket_t>(*m_ctx, ZMQ_REQ) ;
+    m_worker = std::make_unique<zmq::socket_t>(*m_ctx, ZMQ_DEALER) ;
     s_set_id(*m_worker) ;
     m_worker->set(zmq::sockopt::linger, 0) ;
     m_worker->connect(m_brokerAddr) ;
@@ -155,7 +155,7 @@ void Worker::sendToBroker(WMessageType type, std::optional<zmq::multipart_t>&& m
     msg->push(zmq::message_t()) ;               // Add an empty delimiter
     if (m_verbose == true)
     {
-        s_console("I: send %s to broker:", mdps_commands[static_cast<uint8_t>(type)].data()) ;
+        s_console("I: sending %s to broker:", mdps_commands[static_cast<uint8_t>(type)].data()) ;
         dump(*msg) ;
     }
     msg->send(*m_worker) ;

@@ -84,7 +84,7 @@ zmq::multipart_t Client::send(const std::string& service, zmq::multipart_t&& req
                 // Don't try to handle errors, just assert noisily
                 assert(msg.size() >= 3) ;
                 assert(msg.popstr() == std::string(MDP_CLIENT)) ;
-                assert(msg.popstr() == std::string(mdps_commands[static_cast<size_t>(WMessageType::REPLY)])) ;
+                assert(msg.popstr() == service) ;
                 return msg ;
             }
             if (--retriesLeft == 0)
