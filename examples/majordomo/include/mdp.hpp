@@ -14,6 +14,10 @@ namespace md1::majordomo {
 static constexpr std::string_view MDP_CLIENT = "MDPC01" ;
 static constexpr std::string_view MDP_WORKER = "MDPW01" ;
 
+static constexpr uint32_t HEARTBEAT_LIVENESS = 3 ;
+static constexpr uint32_t HEARTBEAT_INTERVAL =  2500 ;    //  msecs
+static constexpr uint32_t HEARTBEAT_EXPIRY =  HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS ;    //  msecs
+
 using Duration = std::chrono::duration<int64_t, std::milli> ;
 using TimePoint = std::chrono::time_point<std::chrono::system_clock> ;
 

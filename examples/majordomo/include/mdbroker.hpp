@@ -42,7 +42,7 @@ struct Service
     std::string m_name ;
     std::deque<zmq::multipart_t> m_requests ;
     std::list<Worker*> m_waitingWorkers ;
-    size_t m_numWorkers
+    size_t m_numWorkers ;
 } ;
 
 //------1-------2-------3-------4-------5-------6-------7-------8-------9-------10------11------12------13------14------15------
@@ -60,16 +60,16 @@ private:
     Service& getService(const std::string& name) ;
 
     Worker& getWorker(const std::string& identity) ;
-    void removeWorker(const std::string& name, bool disconnect) ;
+    void removeWorker(const std::string& identity, bool disconnect) ;
     void purgeWorkers() ;
 
     void dispatch(Service& service, std::optional<zmq::multipart_t>&& msg) ;
     void handleInternalService(const std::string& service, zmq::multipart_t&& msg) ;
+    void messageSetBody(zmq::multipart_t& msg, zmq::message_t&& body) ;
 
-    void processWorkerMessage(Worker& worker, zmq::multipart_t&& msg) ;
+    void processWorkerMessage(const std::string& workerIdentity, zmq::multipart_t&& msg) ;
     void sendWorkerMessage(Worker& worker, WMessageType type, std::optional<zmq::multipart_t>&& msg) ;
     void markWorkerAsWaiting(Worker& worker) ;
-
     void processClientMessage(const std::string& clientName, zmq::multipart_t&& msg) ;
 
     std::shared_ptr<zmq::context_t> m_ctx ;
