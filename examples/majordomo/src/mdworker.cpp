@@ -60,7 +60,7 @@ void Worker::setReconnect(Duration reconnect)
 
 //------1-------2-------3-------4-------5-------6-------7-------8-------9-------10------11------12------13------14------15------
 
-zmq::multipart_t Worker::recv(std::optional<zmq::multipart_t>&& reply)
+zmq::multipart_t Worker::recv(std::optional<zmq::multipart_t>& reply)
 {
     assert (m_expectingReply == false || reply.has_value()) ;
     if (reply.has_value())

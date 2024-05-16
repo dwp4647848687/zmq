@@ -22,7 +22,7 @@ public:
     
     void setHeartbeat(Duration heartbeat) ;
     void setReconnect(Duration reconnect) ;
-    zmq::multipart_t recv(std::optional<zmq::multipart_t>&& reply) ;
+    zmq::multipart_t recv(std::optional<zmq::multipart_t>& reply) ;
 
 private:
     void connectToBroker() ;
